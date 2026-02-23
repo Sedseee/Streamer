@@ -1,0 +1,23 @@
+name: 24/7 Looped Stream
+on:
+  schedule:
+    - cron: '0 */5 * * *' # Restarts every 5 hours to beat the 6-hour limit
+  workflow_dispatch:      # Allows you to start it manually from your phone
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Run Stream
+        run: |
+          ffmpeg -re -stream_loop -1 -i "video.mp4" \
+          -c:v libx264 -preset veryfast -b:v 2500k \
+          -maxrate 2500k -bufsize 5000k -g 60 \
+          -c:a aac -b:a 128k -ar 44100 \
+          -f flv "rtmp://a.rtmp.youtube.com/live2/${{ secrets.YOUTUBE_STREAM_KEY }}"
